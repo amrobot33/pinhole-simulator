@@ -19,11 +19,6 @@
             min-height: 100vh;
         }
 
-        #root {
-            width: 100%;
-            min-height: 100vh;
-        }
-
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -180,10 +175,79 @@
             color: #8B5A7C;
         }
 
+        /* Custom CSS Chart */
         .chart-container {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #FAF9F7;
+            border-radius: 8px;
+        }
+
+        .chart-title {
+            font-size: 0.875rem;
+            color: #6B6B6B;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .chart {
+            display: flex;
+            /* align-items: flex-end; <--- 错误点：删除此行 */
+            justify-content: space-around;
+            height: 300px;
+            padding: 1rem 0.5rem;
+            border-bottom: 2px solid #4a5068;
+            position: relative;
+        }
+
+        .chart-bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            margin: 0 2px;
+            justify-content: flex-end; /* <--- 修复点：添加此行 */
+        }
+
+        .chart-bar {
             width: 100%;
-            height: 350px;
-            margin-top: 1rem;
+            max-width: 50px;
+            background: linear-gradient(180deg, #FF8A65, #FFB199);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+
+        .chart-bar-value {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #2A2A2A;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .chart-label {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6B6B6B;
+            font-weight: 500;
+        }
+
+        .chart-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 2rem;
+            width: 1px;
+            background: #E8E4DF;
         }
 
         .interpretation {
@@ -256,42 +320,6 @@
             opacity: 0.7;
         }
 
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 60vh;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #E8E4DF;
-            border-top: 4px solid #FF8A65;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            color: #6B6B6B;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .loading-detail {
-            color: #8B5A7C;
-            font-size: 0.875rem;
-        }
-
         @media (max-width: 768px) {
             .title {
                 font-size: 1.75rem;
@@ -305,378 +333,292 @@
                 grid-template-columns: 1fr;
             }
 
-            .chart-container {
-                height: 300px;
+            .chart {
+                height: 250px;
             }
+        }
+
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="root">
-        <div class="loading-container">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Loading Libraries...</div>
-            <div class="loading-detail" id="loadingStatus">Initializing React</div>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">✦ Interest Matching Probability Simulator ✦</h1>
+            <p class="subtitle">
+                Pinhole Social Card System — Star Map Generation Algorithm Analysis
+            </p>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-title">Simulation Parameters</h2>
+            <div class="param-grid">
+                <div class="param-item">
+                    <label>Total Interest Pool Size</label>
+                    <input type="number" id="totalInterests" value="100">
+                </div>
+                <div class="param-item">
+                    <label>Number of Attendees</label>
+                    <input type="number" id="numPeople" value="50">
+                </div>
+                <div class="param-item">
+                    <label>Interests Per Person</label>
+                    <input type="number" id="interestsPerPerson" value="15">
+                </div>
+                <div class="param-item">
+                    <label>Star Map Size (Top K)</label>
+                    <input type="number" id="topKForStarMap" value="20">
+                </div>
+                <div class="param-item">
+                    <label>Minimum Match Required</label>
+                    <input type="number" id="minMatchRequired" value="6">
+                </div>
+                <div class="param-item">
+                    <label>Number of Simulations</label>
+                    <input type="number" id="numSimulations" value="1000">
+                </div>
+            </div>
+            
+            <div class="param-item" style="margin-top: 1rem;">
+                <label>Interest Distribution Model</label>
+                <select id="distributionType">
+                    <option value="zipf">Zipf Distribution (Real-world scenario - Power law)</option>
+                    <option value="normal">Normal Distribution (Balanced middle)</option>
+                    <option value="uniform">Uniform Distribution (Complete randomness)</option>
+                </select>
+            </div>
+
+            <button class="run-button" id="runButton" onclick="runSimulation()">
+                ▶ Run Simulation
+            </button>
+        </div>
+
+        <div id="results" class="hidden">
+            <div class="metrics-grid">
+                <div class="metric-card success">
+                    <div class="metric-label">Success Rate</div>
+                    <div class="metric-value" id="successRate">-</div>
+                    <div class="metric-desc" id="successDesc">-</div>
+                </div>
+                <div class="metric-card minimum">
+                    <div class="metric-label">Avg. Minimum Matches</div>
+                    <div class="metric-value" id="minMatches">-</div>
+                    <div class="metric-desc">The "unluckiest" attendee per simulation</div>
+                </div>
+                <div class="metric-card average">
+                    <div class="metric-label">Overall Avg. Matches</div>
+                    <div class="metric-value" id="avgMatches">-</div>
+                    <div class="metric-desc">Expected matches per person</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">Match Distribution Across All Simulations</h2>
+                <div class="chart-container">
+                    <div class="chart-title">Number of Matches vs Frequency</div>
+                    <div class="chart" id="chart"></div>
+                </div>
+            </div>
+
+            <div class="interpretation">
+                <h3 class="interpretation-title">📊 Results Interpretation</h3>
+                <div class="interpretation-content" id="interpretation"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Pinhole Social Card System © 2025 | Algorithm Research & Development</p>
         </div>
     </div>
 
-    <!-- Load libraries with better error handling -->
     <script>
-        let loadingStatus = document.getElementById('loadingStatus');
-        
-        function updateStatus(msg) {
-            if (loadingStatus) loadingStatus.textContent = msg;
-        }
-        
-        window.onerror = function(msg, url, line) {
-            console.error('Error:', msg, 'at', url, line);
-            if (loadingStatus) {
-                loadingStatus.innerHTML = '<span style="color: #FF8A65;">Error loading libraries. Please refresh the page.</span>';
-            }
-        };
-    </script>
+        function runSimulation() {
+            const button = document.getElementById('runButton');
+            button.disabled = true;
+            button.textContent = 'Running Simulation...';
 
-    <!-- React and ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" onload="updateStatus('React loaded ✓')"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" onload="updateStatus('ReactDOM loaded ✓')"></script>
-    
-    <!-- Recharts -->
-    <script src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js" onload="updateStatus('Recharts loaded ✓')"></script>
-    
-    <!-- Babel Standalone -->
-    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" onload="updateStatus('Compiling components...')"></script>
-    
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = window.Recharts;
+            setTimeout(() => {
+                const totalInterests = parseInt(document.getElementById('totalInterests').value);
+                const numPeople = parseInt(document.getElementById('numPeople').value);
+                const interestsPerPerson = parseInt(document.getElementById('interestsPerPerson').value);
+                const topKForStarMap = parseInt(document.getElementById('topKForStarMap').value);
+                const minMatchRequired = parseInt(document.getElementById('minMatchRequired').value);
+                const numSimulations = parseInt(document.getElementById('numSimulations').value);
+                const distributionType = document.getElementById('distributionType').value;
 
-        function InterestMatchingSimulator() {
-            const [results, setResults] = useState(null);
-            const [params, setParams] = useState({
-                totalInterests: 100,
-                numPeople: 50,
-                interestsPerPerson: 15,
-                topKForStarMap: 20,
-                minMatchRequired: 6,
-                numSimulations: 1000,
-                distributionType: 'zipf'
-            });
-            const [isRunning, setIsRunning] = useState(false);
+                let successCount = 0;
+                let matchDistribution = Array(interestsPerPerson + 1).fill(0);
+                let minMatchesPerSim = [];
+                let avgMatchesPerSim = [];
 
-            const runSimulation = () => {
-                setIsRunning(true);
-                setTimeout(() => {
-                    const { totalInterests, numPeople, interestsPerPerson, topKForStarMap, minMatchRequired, numSimulations, distributionType } = params;
-                    
-                    let successCount = 0;
-                    let matchDistribution = Array(interestsPerPerson + 1).fill(0);
-                    let minMatchesPerSim = [];
-                    let avgMatchesPerSim = [];
-                    
-                    for (let sim = 0; sim < numSimulations; sim++) {
-                        let interestPopularity = [];
-                        if (distributionType === 'zipf') {
-                            for (let i = 0; i < totalInterests; i++) {
-                                interestPopularity.push(1 / Math.pow(i + 1, 1.2));
-                            }
-                        } else if (distributionType === 'normal') {
-                            for (let i = 0; i < totalInterests; i++) {
-                                let x = (i - totalInterests/2) / (totalInterests/6);
-                                interestPopularity.push(Math.exp(-x*x/2));
-                            }
-                        } else {
-                            interestPopularity = Array(totalInterests).fill(1);
+                for (let sim = 0; sim < numSimulations; sim++) {
+                    let interestPopularity = [];
+                    if (distributionType === 'zipf') {
+                        for (let i = 0; i < totalInterests; i++) {
+                            interestPopularity.push(1 / Math.pow(i + 1, 1.2));
                         }
-                        
-                        const sum = interestPopularity.reduce((a, b) => a + b, 0);
-                        interestPopularity = interestPopularity.map(p => p / sum);
-                        
-                        let allUserInterests = [];
-                        let interestCounts = Array(totalInterests).fill(0);
-                        
-                        for (let person = 0; person < numPeople; person++) {
-                            let personInterests = new Set();
-                            
-                            while (personInterests.size < interestsPerPerson) {
-                                let rand = Math.random();
-                                let cumSum = 0;
-                                for (let i = 0; i < totalInterests; i++) {
-                                    cumSum += interestPopularity[i];
-                                    if (rand <= cumSum) {
-                                        personInterests.add(i);
-                                        break;
-                                    }
+                    } else if (distributionType === 'normal') {
+                        for (let i = 0; i < totalInterests; i++) {
+                            let x = (i - totalInterests/2) / (totalInterests/6);
+                            interestPopularity.push(Math.exp(-x*x/2));
+                        }
+                    } else {
+                        interestPopularity = Array(totalInterests).fill(1);
+                    }
+
+                    const sum = interestPopularity.reduce((a, b) => a + b, 0);
+                    interestPopularity = interestPopularity.map(p => p / sum);
+
+                    let allUserInterests = [];
+                    let interestCounts = Array(totalInterests).fill(0);
+
+                    for (let person = 0; person < numPeople; person++) {
+                        let personInterests = new Set();
+
+                        while (personInterests.size < interestsPerPerson) {
+                            let rand = Math.random();
+                            let cumSum = 0;
+                            for (let i = 0; i < totalInterests; i++) {
+                                cumSum += interestPopularity[i];
+                                if (rand <= cumSum) {
+                                    personInterests.add(i);
+                                    break;
                                 }
                             }
-                            
-                            allUserInterests.push(Array.from(personInterests));
-                            personInterests.forEach(interest => interestCounts[interest]++);
                         }
-                        
-                        let topInterests = interestCounts
-                            .map((count, idx) => ({ idx, count }))
-                            .sort((a, b) => b.count - a.count)
-                            .slice(0, topKForStarMap)
-                            .map(item => item.idx);
-                        
-                        let topInterestsSet = new Set(topInterests);
-                        
-                        let minMatches = interestsPerPerson;
-                        let totalMatches = 0;
-                        let allPeopleMeetRequirement = true;
-                        
-                        for (let person = 0; person < numPeople; person++) {
-                            let matches = allUserInterests[person].filter(interest => 
-                                topInterestsSet.has(interest)
-                            ).length;
-                            
-                            matchDistribution[matches]++;
-                            minMatches = Math.min(minMatches, matches);
-                            totalMatches += matches;
-                            
-                            if (matches < minMatchRequired) {
-                                allPeopleMeetRequirement = false;
-                            }
-                        }
-                        
-                        minMatchesPerSim.push(minMatches);
-                        avgMatchesPerSim.push(totalMatches / numPeople);
-                        
-                        if (allPeopleMeetRequirement) {
-                            successCount++;
+
+                        allUserInterests.push(Array.from(personInterests));
+                        personInterests.forEach(interest => interestCounts[interest]++);
+                    }
+
+                    let topInterests = interestCounts
+                        .map((count, idx) => ({ idx, count }))
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, topKForStarMap)
+                        .map(item => item.idx);
+
+                    let topInterestsSet = new Set(topInterests);
+
+                    let minMatches = interestsPerPerson;
+                    let totalMatches = 0;
+                    let allPeopleMeetRequirement = true;
+
+                    for (let person = 0; person < numPeople; person++) {
+                        let matches = allUserInterests[person].filter(interest => 
+                            topInterestsSet.has(interest)
+                        ).length;
+
+                        matchDistribution[matches]++;
+                        minMatches = Math.min(minMatches, matches);
+                        totalMatches += matches;
+
+                        if (matches < minMatchRequired) {
+                            allPeopleMeetRequirement = false;
                         }
                     }
-                    
-                    const successRate = (successCount / numSimulations * 100).toFixed(2);
-                    const avgMinMatches = (minMatchesPerSim.reduce((a, b) => a + b, 0) / numSimulations).toFixed(2);
-                    const avgAvgMatches = (avgMatchesPerSim.reduce((a, b) => a + b, 0) / numSimulations).toFixed(2);
-                    
-                    const distributionData = matchDistribution.map((count, matches) => ({
+
+                    minMatchesPerSim.push(minMatches);
+                    avgMatchesPerSim.push(totalMatches / numPeople);
+
+                    if (allPeopleMeetRequirement) {
+                        successCount++;
+                    }
+                }
+
+                const successRate = (successCount / numSimulations * 100).toFixed(2);
+                const avgMinMatches = (minMatchesPerSim.reduce((a, b) => a + b, 0) / numSimulations).toFixed(2);
+                const avgAvgMatches = (avgMatchesPerSim.reduce((a, b) => a + b, 0) / numSimulations).toFixed(2);
+
+                const distributionData = matchDistribution
+                    .map((count, matches) => ({
                         matches,
                         count,
                         percentage: (count / (numSimulations * numPeople) * 100).toFixed(2)
-                    })).filter(d => d.count > 0);
-                    
-                    setResults({
-                        successRate,
-                        avgMinMatches,
-                        avgAvgMatches,
-                        distributionData
-                    });
-                    setIsRunning(false);
-                }, 100);
-            };
+                    }))
+                    .filter(d => d.count > 0);
 
-            useEffect(() => {
-                runSimulation();
-            }, []);
+                displayResults(successRate, avgMinMatches, avgAvgMatches, distributionData, 
+                    minMatchRequired, numSimulations, distributionType);
 
-            const handleParamChange = (key, value) => {
-                setParams(prev => ({ ...prev, [key]: parseFloat(value) || value }));
-            };
-
-            const getDistributionLabel = (type) => {
-                if (type === 'zipf') return 'Zipf (Real-world power law - few interests dominate)';
-                if (type === 'normal') return 'Normal (Bell curve - balanced middle)';
-                return 'Uniform (Equal probability - theoretical only)';
-            };
-
-            const getStatusClass = (rate) => {
-                if (rate >= 90) return 'excellent';
-                if (rate >= 50) return 'good';
-                return 'poor';
-            };
-
-            const getStatusText = (rate) => {
-                if (rate >= 90) return {
-                    title: '✅ System Design Feasible!',
-                    desc: 'The vast majority of scenarios meet requirements. The algorithm performs well under real conditions.'
-                };
-                if (rate >= 50) return {
-                    title: '⚠️ Feasible with Optimization',
-                    desc: 'Viable but needs improvement. Consider user guidance or adjust Star Map generation logic.'
-                };
-                return {
-                    title: '❌ Success Rate Too Low',
-                    desc: 'Current parameters cannot guarantee satisfactory matching. Redesign mechanism or lower minimum threshold required.'
-                };
-            };
-
-            return (
-                <div className="container">
-                    <div className="header">
-                        <h1 className="title">✦ Interest Matching Probability Simulator ✦</h1>
-                        <p className="subtitle">
-                            Pinhole Social Card System — Star Map Generation Algorithm Analysis
-                        </p>
-                    </div>
-
-                    <div className="panel">
-                        <h2 className="panel-title">Simulation Parameters</h2>
-                        <div className="param-grid">
-                            <div className="param-item">
-                                <label>Total Interest Pool Size</label>
-                                <input 
-                                    type="number" 
-                                    value={params.totalInterests}
-                                    onChange={(e) => handleParamChange('totalInterests', e.target.value)}
-                                />
-                            </div>
-                            <div className="param-item">
-                                <label>Number of Attendees</label>
-                                <input 
-                                    type="number" 
-                                    value={params.numPeople}
-                                    onChange={(e) => handleParamChange('numPeople', e.target.value)}
-                                />
-                            </div>
-                            <div className="param-item">
-                                <label>Interests Per Person</label>
-                                <input 
-                                    type="number" 
-                                    value={params.interestsPerPerson}
-                                    onChange={(e) => handleParamChange('interestsPerPerson', e.target.value)}
-                                />
-                            </div>
-                            <div className="param-item">
-                                <label>Star Map Size (Top K)</label>
-                                <input 
-                                    type="number" 
-                                    value={params.topKForStarMap}
-                                    onChange={(e) => handleParamChange('topKForStarMap', e.target.value)}
-                                />
-                            </div>
-                            <div className="param-item">
-                                <label>Minimum Match Required</label>
-                                <input 
-                                    type="number" 
-                                    value={params.minMatchRequired}
-                                    onChange={(e) => handleParamChange('minMatchRequired', e.target.value)}
-                                />
-                            </div>
-                            <div className="param-item">
-                                <label>Number of Simulations</label>
-                                <input 
-                                    type="number" 
-                                    value={params.numSimulations}
-                                    onChange={(e) => handleParamChange('numSimulations', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        
-                        <div className="param-item" style={{ marginTop: '1rem' }}>
-                            <label>Interest Distribution Model</label>
-                            <select 
-                                value={params.distributionType}
-                                onChange={(e) => handleParamChange('distributionType', e.target.value)}
-                            >
-                                <option value="zipf">Zipf Distribution (Real-world scenario - Power law)</option>
-                                <option value="normal">Normal Distribution (Balanced middle)</option>
-                                <option value="uniform">Uniform Distribution (Complete randomness)</option>
-                            </select>
-                        </div>
-
-                        <button 
-                            className="run-button"
-                            onClick={runSimulation}
-                            disabled={isRunning}
-                            style={{ marginTop: '1rem' }}
-                        >
-                            {isRunning ? 'Running Simulation...' : '▶ Run Simulation'}
-                        </button>
-                    </div>
-
-                    {results && (
-                        <>
-                            <div className="metrics-grid">
-                                <div className="metric-card success">
-                                    <div className="metric-label">Success Rate</div>
-                                    <div className="metric-value">{results.successRate}%</div>
-                                    <div className="metric-desc">
-                                        All attendees achieve ≥{params.minMatchRequired} matches
-                                    </div>
-                                </div>
-                                <div className="metric-card minimum">
-                                    <div className="metric-label">Avg. Minimum Matches</div>
-                                    <div className="metric-value">{results.avgMinMatches}</div>
-                                    <div className="metric-desc">
-                                        The "unluckiest" attendee per simulation
-                                    </div>
-                                </div>
-                                <div className="metric-card average">
-                                    <div className="metric-label">Overall Avg. Matches</div>
-                                    <div className="metric-value">{results.avgAvgMatches}</div>
-                                    <div className="metric-desc">
-                                        Expected matches per person
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="panel">
-                                <h2 className="panel-title">Match Distribution Across All Simulations</h2>
-                                <div className="chart-container">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={results.distributionData} margin={{ top: 5, right: 20, left: 0, bottom: 20 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DF" />
-                                            <XAxis 
-                                                dataKey="matches" 
-                                                label={{ value: 'Number of Matches', position: 'insideBottom', offset: -10, fill: '#2A2A2A' }}
-                                                stroke="#4a5068"
-                                            />
-                                            <YAxis 
-                                                label={{ value: 'Frequency', angle: -90, position: 'insideLeft', fill: '#2A2A2A' }}
-                                                stroke="#4a5068"
-                                            />
-                                            <Tooltip 
-                                                contentStyle={{ 
-                                                    background: '#FFFFFF',
-                                                    border: '1px solid #FF8A65',
-                                                    borderRadius: '8px',
-                                                    color: '#2A2A2A'
-                                                }}
-                                            />
-                                            <Bar dataKey="count" fill="#FF8A65" radius={[8, 8, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            <div className="interpretation">
-                                <h3 className="interpretation-title">📊 Results Interpretation</h3>
-                                <div className="interpretation-content">
-                                    <p>
-                                        <strong>Success Rate {results.successRate}%</strong> indicates that in {params.numSimulations} simulations, 
-                                        this percentage guaranteed all attendees could match at least {params.minMatchRequired} interests from the Star Map.
-                                    </p>
-                                    <p>
-                                        <strong>Current Distribution Type:</strong> {getDistributionLabel(params.distributionType)}
-                                    </p>
-                                    <div className={`status-box ${getStatusClass(parseFloat(results.successRate))}`}>
-                                        <div className="status-title">{getStatusText(parseFloat(results.successRate)).title}</div>
-                                        <div className="status-desc">{getStatusText(parseFloat(results.successRate)).desc}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="footer">
-                        <p>Pinhole Social Card System © 2025 | Algorithm Research & Development</p>
-                    </div>
-                </div>
-            );
+                button.disabled = false;
+                button.textContent = '▶ Run Simulation';
+            }, 100);
         }
 
-        // Initialize app after all libraries loaded
-        setTimeout(() => {
-            if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && typeof window.Recharts !== 'undefined') {
-                updateStatus('Rendering application...');
-                ReactDOM.render(<InterestMatchingSimulator />, document.getElementById('root'));
-            } else {
-                console.error('Libraries not fully loaded');
-                document.getElementById('root').innerHTML = '<div class="loading-container"><div class="loading-text" style="color: #FF8A65;">Failed to load required libraries. Please refresh the page.</div></div>';
-            }
-        }, 1000);
+        function displayResults(successRate, avgMinMatches, avgAvgMatches, distributionData, 
+            minMatchRequired, numSimulations, distributionType) {
+            
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('successRate').textContent = successRate + '%';
+            document.getElementById('successDesc').textContent = `All attendees achieve ≥${minMatchRequired} matches`;
+            document.getElementById('minMatches').textContent = avgMinMatches;
+            document.getElementById('avgMatches').textContent = avgAvgMatches;
+
+            // Draw chart
+            const chart = document.getElementById('chart');
+            chart.innerHTML = '';
+            
+            const maxCount = Math.max(...distributionData.map(d => d.count));
+            
+            distributionData.forEach(data => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'chart-bar-wrapper';
+                
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                const height = (data.count / maxCount) * 100;
+                bar.style.height = height + '%';
+                
+                const value = document.createElement('div');
+                value.className = 'chart-bar-value';
+                value.textContent = data.count;
+                bar.appendChild(value);
+                
+                const label = document.createElement('div');
+                label.className = 'chart-label';
+                label.textContent = data.matches;
+                
+                wrapper.appendChild(bar);
+                wrapper.appendChild(label);
+                chart.appendChild(wrapper);
+            });
+
+            // Interpretation
+            const distLabel = distributionType === 'zipf' ? 
+                'Zipf (Real-world power law - few interests dominate)' :
+                distributionType === 'normal' ? 
+                'Normal (Bell curve - balanced middle)' :
+                'Uniform (Equal probability - theoretical only)';
+
+            const statusClass = parseFloat(successRate) >= 90 ? 'excellent' :
+                parseFloat(successRate) >= 50 ? 'good' : 'poor';
+            
+            const statusText = parseFloat(successRate) >= 90 ?
+                { title: '✅ System Design Feasible!', 
+                  desc: 'The vast majority of scenarios meet requirements. The algorithm performs well under real conditions.' } :
+                parseFloat(successRate) >= 50 ?
+                { title: '⚠️ Feasible with Optimization',
+                  desc: 'Viable but needs improvement. Consider user guidance or adjust Star Map generation logic.' } :
+                { title: '❌ Success Rate Too Low',
+                  desc: 'Current parameters cannot guarantee satisfactory matching. Redesign mechanism or lower minimum threshold required.' };
+
+            document.getElementById('interpretation').innerHTML = `
+                <p><strong>Success Rate ${successRate}%</strong> indicates that in ${numSimulations} simulations, 
+                this percentage guaranteed all attendees could match at least ${minMatchRequired} interests from the Star Map.</p>
+                <p><strong>Current Distribution Type:</strong> ${distLabel}</p>
+                <div class="status-box ${statusClass}">
+                    <div class="status-title">${statusText.title}</div>
+                    <div class="status-desc">${statusText.desc}</div>
+                </div>
+            `;
+        }
+
+        // Run on page load
+        window.onload = function() {
+            runSimulation();
+        };
     </script>
 </body>
 </html>
